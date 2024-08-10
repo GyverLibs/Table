@@ -1,0 +1,57 @@
+#######################################
+# Syntax Coloring Map For Table
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+Table	KEYWORD1
+TableFile	KEYWORD1
+Cell	KEYWORD1
+Row	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+get	KEYWORD2
+dump	KEYWORD2
+toCSV	KEYWORD2
+rows	KEYWORD2
+cols	KEYWORD2
+clear	KEYWORD2
+changed	KEYWORD2
+resize	KEYWORD2
+reserve	KEYWORD2
+addRow	KEYWORD2
+shiftUp	KEYWORD2
+shiftDown	KEYWORD2
+reset	KEYWORD2
+writeSize	KEYWORD2
+writeTo	KEYWORD2
+readFrom	KEYWORD2
+type	KEYWORD2
+setFS	KEYWORD2
+setTimeout	KEYWORD2
+begin	KEYWORD2
+update	KEYWORD2
+tick	KEYWORD2
+toInt	KEYWORD2
+toFloat	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+tbl	LITERAL1
+cell_t	LITERAL1
+
+None	LITERAL1
+Int8	LITERAL1
+Uint8	LITERAL1
+Int16	LITERAL1
+Uint16	LITERAL1
+Int32	LITERAL1
+Uint32	LITERAL1
+Float	LITERAL1
