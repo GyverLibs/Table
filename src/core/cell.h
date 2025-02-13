@@ -23,6 +23,8 @@ class Cell : public Printable {
             case cell_t::Uint16: return p.print((uint16_t)_get16());
             case cell_t::Int32: return p.print((int32_t)_get32());
             case cell_t::Uint32: return p.print((uint32_t)_get32());
+            case cell_t::Int64: return p.print((int32_t)_get64());
+            case cell_t::Uint64: return p.print((uint32_t)_get64());
             case cell_t::Float: return p.print((float)_getF());
             default: break;
         }
@@ -46,6 +48,11 @@ class Cell : public Printable {
             case cell_t::Uint32: {
                 uint32_t v = val;
                 _write(&v, 4);
+            } break;
+            case cell_t::Int64:
+            case cell_t::Uint64: {
+                uint64_t v = val;
+                _write(&v, 8);
             } break;
             case cell_t::Float: {
                 float v = val;
@@ -71,6 +78,10 @@ class Cell : public Printable {
             case cell_t::Uint32:
                 return _get32();
 
+            case cell_t::Int64:
+            case cell_t::Uint64:
+                return _get64();
+
             case cell_t::Float:
                 return _getF();
 
@@ -84,6 +95,18 @@ class Cell : public Printable {
         return (type() == cell_t::Float) ? _getF() : toInt();
     }
 
+    int64_t toInt64() const {
+        switch (type()) {
+            case cell_t::Int64:
+            case cell_t::Uint64:
+                return _get64();
+
+            default:
+                break;
+        }
+        return toInt();
+    }
+
     template <typename T>
     operator T() {
         return toInt();
@@ -93,6 +116,12 @@ class Cell : public Printable {
     }
     operator double() {
         return toFloat();
+    }
+    operator int64_t() {
+        return toInt64();
+    }
+    operator uint64_t() {
+        return toInt64();
     }
 
     // compare
@@ -185,6 +214,11 @@ class Cell : public Printable {
     uint32_t _get32() const {
         uint32_t val;
         memcpy(&val, _p(), 4);
+        return val;
+    }
+    uint64_t _get64() const {
+        uint64_t val;
+        memcpy(&val, _p(), 8);
         return val;
     }
     float _getF() const {

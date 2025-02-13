@@ -1,36 +1,60 @@
 #pragma once
 #include <Arduino.h>
 
-#include "core/row.h"
-#include "core/table_t.h"
+#include "./core/row.h"
+#include "./core/table_t.h"
 
 class Table : public tbl::table_t {
    public:
-    using tbl::table_t::table_t;
+    // создать пустую таблицу
+    Table() {}
 
     // строк, столбцов, типы данных ячеек
     Table(uint16_t rows, uint8_t cols, ...) {
-        if (!_types.resize(cols)) goto error;
-        if (!_shifts.resize(cols)) goto error;
-        _rowSize = 0;
-
         va_list types;
         va_start(types, cols);
-        for (uint16_t col = 0; col < cols; col++) {
-            _types[col] = va_arg(types, int);
-            _shifts[col] = _rowSize;
-            _rowSize += _cellSize(col);
-        }
+        _create(rows, cols, types);
         va_end(types);
-        if (!resize(rows)) goto error;
-        return;
-
-    error:
-        reset();
     }
 
     ~Table() {
         reset();
+    }
+
+    // создать таблицу (строк, столбцов, типы данных ячеек)
+    bool create(uint16_t rows, uint8_t cols, ...) {
+        va_list types;
+        va_start(types, cols);
+        bool res = _create(rows, cols, types);
+        va_end(types);
+        return res;
+    }
+
+    // инициализировать количество и типы столбцов (не изменит таблицу если совпадает)
+    bool init(uint8_t cols, ...) {
+        bool create = true;
+
+        if (_types.size() == cols) {
+            create = false;
+            va_list types;
+            va_start(types, cols);
+            for (uint8_t col = 0; col < cols; col++) {
+                if (_types[col] != va_arg(types, int)) {
+                    create = true;
+                    break;
+                }
+            }
+            va_end(types);
+        }
+
+        if (create) {
+            va_list types;
+            va_start(types, cols);
+            bool res = _create(cols, types);
+            va_end(types);
+            return res;
+        }
+        return true;
     }
 
     // получить строку таблицы. Отрицательные числа - получить с конца
@@ -45,9 +69,34 @@ class Table : public tbl::table_t {
         return tbl::Row(row, *this);
     }
 
+    // добавить строку со значениями в конец
+    template <typename... Args>
+    bool append(Args... args) {
+        if (add()) {
+            get(-1).write(args...);
+            return true;
+        }
+        return false;
+    }
+
+    // сместить таблицу вверх и записать значения в конец
+    template <typename... Args>
+    void shift(Args... args) {
+        scrollUp();
+        get(-1).write(args...);
+    }
+
     // получить ячейку
     inline tbl::Cell get(int row, uint8_t col) {
         return get(row)[col];
+    }
+
+    // дублировать последнюю строку и добавить в конец
+    bool dupLast() {
+        if (!rows() || !add()) return false;
+        uint8_t* p = _data.buf() + _data.size();
+        memcpy(p - _rowSize, p - _rowSize * 2, _rowSize);
+        return true;
     }
 
     // вывести таблицу в print
@@ -63,6 +112,8 @@ class Table : public tbl::table_t {
                 case cell_t::Uint16: p.print(F("Uint16")); break;
                 case cell_t::Int32: p.print(F("Int32")); break;
                 case cell_t::Uint32: p.print(F("Uint32")); break;
+                case cell_t::Int64: p.print(F("Int64")); break;
+                case cell_t::Uint64: p.print(F("Uint64")); break;
                 case cell_t::Float: p.print(F("Float")); break;
             }
         }
@@ -81,7 +132,7 @@ class Table : public tbl::table_t {
     }
 
     // вывести как CSV
-    String toCSV(char separator = ';', uint8_t dec = 2) {
+    String toCSV(char separator = ';', unsigned int dec = 2) {
         String s;
         s.reserve(rows() * cols() * 4);
         for (size_t row = 0; row < rows(); row++) {
@@ -103,4 +154,23 @@ class Table : public tbl::table_t {
    private:
     using table_t::_cellP;
     using table_t::_change;
+
+    bool _create(uint16_t rows, uint8_t cols, va_list types) {
+        return _create(cols, types) ? resize(rows) : false;
+    }
+    bool _create(uint8_t cols, va_list types) {
+        reset();
+        if (_types.resize(cols) && _shifts.resize(cols)) {
+            _rowSize = 0;
+            for (uint8_t col = 0; col < cols; col++) {
+                _types[col] = va_arg(types, int);
+                _shifts[col] = _rowSize;
+                _rowSize += _cellSize(col);
+            }
+            _change();
+            return true;
+        }
+        reset();
+        return false;
+    }
 };

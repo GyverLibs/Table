@@ -12,6 +12,8 @@ enum class cell_t : int {
     Int32,
     Uint32,
     Float,
+    Int64,
+    Uint64,
 };
 
 namespace tbl {
@@ -33,11 +35,17 @@ class table_t {
     // очистить ячейки (установить 0)
     void clear() {
         _data.clear();
+        _change();
     }
 
-    // хоть одна из ячеек была изменена. Автосброс
+    // хоть одна из ячеек была изменена
     bool changed() {
-        return _changeF ? _changeF = false, 1 : 0;
+        return _changed;
+    }
+
+    // сброс состояния changed()
+    void clearChanged() {
+        _changed = false;
     }
 
     // изменить количество строк
@@ -47,6 +55,7 @@ class table_t {
                 memset(_data.buf() + _rows * _rowSize, 0x00, (rows - _rows) * _rowSize);
             }
             _rows = rows;
+            _change();
             return 1;
         }
         return 0;
@@ -57,19 +66,47 @@ class table_t {
         return cols() ? _data.resize(rows * _rowSize) : 0;
     }
 
-    // добавить строку снизу
-    bool addRow() {
+    // установить лимит кол-ва строк для add/append, будет прокручивать при превышении. 0 - отключить
+    void setLimit(uint16_t limit) {
+        _limit = limit;
+    }
+
+    // добавить строку в конец
+    bool add() {
+        if (_limit && rows() >= _limit) {
+            scrollUp();
+            return true;
+        }
         return resize(rows() + 1);
     }
 
-    // прокрутить таблицу вверх на 1 строку
-    void shiftUp() {
-        _shift(true);
+    // удалить строку. Отрицательные - с конца
+    bool remove(int row) {
+        if (!rows()) return false;
+        if (row < 0) row += rows();
+        if (row < 0) return false;
+
+        uint8_t* p = _data.buf() + row * _rowSize;
+        memmove(p, p + _rowSize, (rows() - row - 1) * _rowSize);
+        _rows--;
+        _change();
+        return true;
     }
 
-    // прокрутить таблицу вниз на 1 строку
-    void shiftDown() {
-        _shift(false);
+    // удалить все строки
+    void removeAll() {
+        _rows = 0;
+        _change();
+    }
+
+    // прокрутить строки вверх на 1 строку
+    void scrollUp() {
+        _scroll(true);
+    }
+
+    // прокрутить строки вниз на 1 строку
+    void scrollDown() {
+        _scroll(false);
     }
 
     // полностью освободить память
@@ -77,9 +114,9 @@ class table_t {
         _data.reset();
         _shifts.reset();
         _types.reset();
-        _changeF = 0;
         _rowSize = 0;
         _rows = 0;
+        _change();
     }
 
     // экспортный размер таблицы (для writeTo)
@@ -90,24 +127,21 @@ class table_t {
     // экспортировать таблицу в size_t write(uint8_t*, size_t)
     template <typename T>
     bool writeTo(T& writer) {
+        // [cols 1b] [rows 2b] [types..] [data..]
+        size_t wr = 0;
         uint8_t cl = cols();
         uint16_t rw = rows();
-        size_t writed = 0;
-        writed += writer.write((uint8_t*)&cl, (size_t)1);
-        writed += writer.write((uint8_t*)&rw, (size_t)2);
-        writed += writer.write(_types.buf(), _types.size());
-        writed += writer.write(_data.buf(), _rows * _rowSize);
-        return writed == writeSize();
-    }
-
-    // экспортировать таблицу в Stream (напр. файл)
-    bool writeTo(Stream& stream) {
-        return _writeTo(Writer(stream));
+        wr += writer.write((uint8_t*)&cl, 1);
+        wr += writer.write((uint8_t*)&rw, 2);
+        wr += writer.write(_types.buf(), _types.size());
+        wr += writer.write(_data.buf(), _rows * _rowSize);
+        return wr == writeSize();
     }
 
     // экспортировать таблицу в буфер размера writeSize()
     bool writeTo(uint8_t* buffer) {
-        return _writeTo(Writer(buffer));
+        Writer wr(buffer);
+        return writeTo(wr);
     }
 
     // импортировать таблицу из Stream (напр. файл)
@@ -147,10 +181,10 @@ class table_t {
         _shifts.move(rval._shifts);
         _types.move(rval._types);
         _data.move(rval._data);
-        _changeF = rval._changeF;
         _rowSize = rval._rowSize;
         _rows = rval._rows;
         rval.reset();
+        _change();
     }
 
     void* _cellP(uint16_t row, uint8_t col) {
@@ -158,7 +192,8 @@ class table_t {
     }
 
     void _change() {
-        _changeF = true;
+        _changed = true;
+        _update = true;
     }
 
    protected:
@@ -167,10 +202,15 @@ class table_t {
     gtl::array_uniq<uint8_t> _data;
     uint16_t _rowSize = 0;
     uint16_t _rows = 0;
-    bool _changeF = 0;
+    uint16_t _limit = 0;
+    bool _changed = 0;
+    bool _update = 0;
 
-    void _shift(bool up) {
-        if (_rows) memmove(_data.buf() + (_rowSize * (!up)), _data.buf() + (_rowSize * up), (_rows - 1) * _rowSize);
+    void _scroll(bool up) {
+        if (_rows) {
+            memmove(_data.buf() + (_rowSize * (!up)), _data.buf() + (_rowSize * up), (_rows - 1) * _rowSize);
+            _change();
+        }
     }
 
     size_t _cellSize(uint8_t col) {
@@ -186,19 +226,13 @@ class table_t {
             case cell_t::Uint32:
             case cell_t::Float:
                 return 4;
+            case cell_t::Int64:
+            case cell_t::Uint64:
+                return 8;
             default:
                 break;
         }
         return 0;
-    }
-
-    bool _writeTo(Writer writer) {
-        // [cols 1b] [rows 2b] [types..] [data..]
-        writer.write((uint8_t)cols());
-        writer.write((uint16_t)rows());
-        writer.write(_types.buf(), _types.size());
-        writer.write(_data.buf(), _rows * _rowSize);
-        return writer.writed() == writeSize();
     }
 
     bool _readFrom(Reader reader) {
@@ -218,6 +252,7 @@ class table_t {
 
         if (!resize(rows)) goto error;
         if (!reader.read(_data.buf(), rows * _rowSize)) goto error;
+        _changed = true;
         return 1;
 
     error:

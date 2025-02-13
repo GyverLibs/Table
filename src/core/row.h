@@ -29,7 +29,7 @@ class Row {
 
     template <typename T>
     void _write(T arg) {
-        Cell(row, _idx++, t) = arg;
+        if (_idx < t.cols()) Cell(row, _idx++, t) = arg;
     }
 };
 
