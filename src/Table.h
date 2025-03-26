@@ -69,6 +69,7 @@ class Table : public tbl::table_t {
         return tbl::Row(row, *this);
     }
 
+#if __cplusplus >= 201703L
     // добавить строку со значениями в конец
     template <typename... Args>
     bool append(Args... args) {
@@ -78,13 +79,16 @@ class Table : public tbl::table_t {
         }
         return false;
     }
+#endif
 
+#if __cplusplus >= 201703L
     // сместить таблицу вверх и записать значения в конец
     template <typename... Args>
     void shift(Args... args) {
         scrollUp();
         get(-1).write(args...);
     }
+#endif
 
     // получить ячейку
     inline tbl::Cell get(int row, uint8_t col) {

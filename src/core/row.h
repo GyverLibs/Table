@@ -15,12 +15,14 @@ class Row {
         return Cell(row, col, t);
     }
 
+#if __cplusplus >= 201703L
     // записать в строку
     template <typename... Args>
     void write(Args... args) {
         _idx = 0;
         (_write(args), ...);
     }
+#endif
 
    private:
     uint16_t row;

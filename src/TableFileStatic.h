@@ -71,6 +71,7 @@ class TableFileStatic {
         return false;
     }
 
+#if __cplusplus >= 201703L
     // добавить строку к таблице
     template <typename... Args>
     bool append(Args... args) {
@@ -108,6 +109,7 @@ class TableFileStatic {
         while (_idx < cols) _write(0);
         return true;
     }
+#endif
 
    private:
     fs::FS* _fs;
