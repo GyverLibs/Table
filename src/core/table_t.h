@@ -1,7 +1,7 @@
 #pragma once
 #include <Arduino.h>
-#include <GTL.h>
 #include <StreamIO.h>
+#include <GTL.h>
 
 enum class cell_t : int {
     None,
@@ -20,8 +20,6 @@ namespace tbl {
 
 class table_t {
    public:
-    table_t() {}
-
     // количество строк
     inline uint16_t rows() {
         return _rows;
@@ -159,34 +157,6 @@ class table_t {
         return (row < rows() && col < cols()) ? (cell_t)_types[col] : (cell_t::None);
     }
 
-    table_t(table_t& val) {
-        move(val);
-    }
-    table_t& operator=(table_t& val) {
-        move(val);
-        return *this;
-    }
-
-#if __cplusplus >= 201103L
-    table_t(table_t&& rval) noexcept {
-        move(rval);
-    }
-    table_t& operator=(table_t&& rval) noexcept {
-        move(rval);
-        return *this;
-    }
-#endif
-
-    void move(table_t& rval) noexcept {
-        _shifts.move(rval._shifts);
-        _types.move(rval._types);
-        _data.move(rval._data);
-        _rowSize = rval._rowSize;
-        _rows = rval._rows;
-        rval.reset();
-        _change();
-    }
-
     void* _cellP(uint16_t row, uint8_t col) {
         return _data.buf() + row * _rowSize + _shifts[col];
     }
@@ -197,12 +167,12 @@ class table_t {
     }
 
    protected:
-    gtl::array_uniq<uint8_t> _types;
-    gtl::array_uniq<uint8_t> _shifts;
-    gtl::array_uniq<uint8_t> _data;
+    gtl::array<uint8_t> _shifts;
+    gtl::array<uint8_t> _types;
+    gtl::array<uint8_t> _data;
     uint16_t _rowSize = 0;
-    uint16_t _rows = 0;
     uint16_t _limit = 0;
+    uint16_t _rows = 0;
     bool _changed = 0;
     bool _update = 0;
 

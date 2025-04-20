@@ -6,8 +6,7 @@
 
 class Table : public tbl::table_t {
    public:
-    // создать пустую таблицу
-    Table() {}
+    using tbl::table_t::table_t;
 
     // строк, столбцов, типы данных ячеек
     Table(uint16_t rows, uint8_t cols, ...) {
@@ -15,10 +14,6 @@ class Table : public tbl::table_t {
         va_start(types, cols);
         _create(rows, cols, types);
         va_end(types);
-    }
-
-    ~Table() {
-        reset();
     }
 
     // создать таблицу (строк, столбцов, типы данных ячеек)
@@ -69,7 +64,7 @@ class Table : public tbl::table_t {
         return tbl::Row(row, *this);
     }
 
-#if __cplusplus >= 201703L
+#if __cplusplus >= 201703L || defined(TABLE_USE_FOLD)
     // добавить строку со значениями в конец
     template <typename... Args>
     bool append(Args... args) {
@@ -79,9 +74,7 @@ class Table : public tbl::table_t {
         }
         return false;
     }
-#endif
 
-#if __cplusplus >= 201703L
     // сместить таблицу вверх и записать значения в конец
     template <typename... Args>
     void shift(Args... args) {
