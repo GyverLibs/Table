@@ -16,6 +16,8 @@ enum class cell_t : int {
     Uint64,
 };
 
+#define _TABLE_USE_FOLD (__cplusplus >= 201703L || defined(TABLE_USE_FOLD) || defined(ESP32))
+
 namespace tbl {
 
 class table_t {

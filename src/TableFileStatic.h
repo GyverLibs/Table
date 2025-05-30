@@ -71,7 +71,7 @@ class TableFileStatic {
         return false;
     }
 
-#if __cplusplus >= 201703L || defined(TABLE_USE_FOLD)
+#if _TABLE_USE_FOLD
     // добавить строку к таблице
     template <typename... Args>
     bool append(Args... args) {

@@ -64,7 +64,7 @@ class Table : public tbl::table_t {
         return tbl::Row(row, *this);
     }
 
-#if __cplusplus >= 201703L || defined(TABLE_USE_FOLD) || defined(ESP32)
+#if _TABLE_USE_FOLD
     // добавить строку со значениями в конец
     template <typename... Args>
     bool append(Args... args) {

@@ -15,7 +15,7 @@ class Row {
         return Cell(row, col, t);
     }
 
-#if __cplusplus >= 201703L || defined(TABLE_USE_FOLD)
+#if _TABLE_USE_FOLD
     // записать в строку
     template <typename... Args>
     void write(Args... args) {
