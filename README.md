@@ -145,43 +145,6 @@ bool readFrom(const uint8_t* buffer, size_t len);
 cell_t type(uint16_t row, uint8_t col);
 ```
 
-### TableFile
-Наследует `Table`. Автоматическая запись в файл при изменении по таймауту
-
-```cpp
-// указать файловую систему, путь к файлу и таймаут в мс
-TableFile(fs::FS* nfs = nullptr, const char* path = nullptr, uint32_t tout = 10000);
-
-// установить файловую систему и имя файла
-void setFS(fs::FS* nfs, const char* path);
-
-// установить таймаут записи, мс (умолч. 10000)
-void setTimeout(uint32_t tout = 10000);
-
-// прочитать данные
-bool begin();
-
-// обновить данные в файле
-bool update();
-
-// тикер, вызывать в loop. Сам обновит данные при изменении и выходе таймаута, вернёт true
-bool tick();
-```
-
-### TableFileStatic
-Добавление данных в файл таблицы без чтения самой таблицы
-
-```cpp
-// указать файловую систему, путь к файлу
-TableFileStatic(fs::FS* nfs, const char* path);
-
-// инициализировать в файле
-bool init(uint8_t cols, ...);
-
-// добавить строку к таблице
-bool append(...);
-```
-
 ### Row
 строка таблицы
 ```cpp
@@ -214,6 +177,57 @@ float toFloat();
 
 // а также операторы сравнения и изменения
 ```
+
+### TableFile
+Наследует `Table`. Автоматическая запись в файл при изменении по таймауту
+
+```cpp
+// указать файловую систему, путь к файлу и таймаут в мс
+TableFile(fs::FS* nfs = nullptr, const char* path = nullptr, uint32_t tout = 10000);
+
+// установить файловую систему и имя файла
+void setFS(fs::FS* nfs, const char* path);
+
+// установить таймаут записи, мс (умолч. 10000)
+void setTimeout(uint32_t tout = 10000);
+
+// прочитать данные
+bool begin();
+
+// обновить данные в файле
+bool update();
+
+// тикер, вызывать в loop. Сам обновит данные при изменении и выходе таймаута, вернёт true
+bool tick();
+```
+
+### TableFileStatic
+Добавление данных в файл таблицы без чтения самой таблицы в оперативную память. Позволяет вести большие таблицы, т.к. нет лимита на открытие в оперативке. Формат данных такой же, как у обычной таблицы выше, т.е. файл `TableFileStatic` можно открыть как `TableFile`.
+
+```cpp
+// указать файловую систему, путь к файлу и макс. кол-во строк (0 - без лимита)
+TableFileStatic(fs::FS* nfs, const char* path, uint16_t maxRows = 0);
+
+// получить инфо о таблице
+Info getInfo();
+
+// вывести таблицу в print
+void dump(Print& p);
+
+// инициализировать в файле
+bool init(uint8_t cols, ...);
+
+// добавить строку к таблице (сдвинет таблицу, если превышает макс. строк)
+bool append(Args... args);
+
+{
+    gtl::array<cell_t> types;  // массив типов длиной cols
+    uint16_t rows = 0;         // строк
+    uint8_t cols = 0;          // столбцов
+}
+```
+
+При установке лимита на макс. строк и при его превышении таблица будет сдвинута и обрезана под лимит. Для вызова `append()` потребуется свободное место под временный файл размером с установленный лимит - по сути такого же размера как текущая таблица.
 
 <a id="examples"></a>
 
@@ -329,20 +343,23 @@ void setup() {
     LittleFS.begin();
 #endif
 
-    TableFileStatic table(&LittleFS, "/table2.tbl");
-    // begin не вызываем
+    TableFileStatic table(&LittleFS, "/table2.tbl", 5);  // макс. 5 строк с перемоткой
+
+    // info
+    auto inf = table.getInfo();
+    Serial.println(inf.cols);
+    Serial.println(inf.rows);
 
     // инициализация кол-ва столбцов и типов, если файл ещё не существует
     table.init(3, cell_t::Uint32, cell_t::Int16, cell_t::Float);
 
     // добавить данные напрямую в файл
-    table.append(1, 2, 3);
+    table.append(inf.rows, random(10), random(10) / 10.0);
 
     // таким образом можно вести лог прямо в файле, не ограничиваясь объёмом оперативной памяти
 
-    // чтение и вывод
-    //table.begin();
-    //table.dump(Serial);
+    // dump
+    table.dump(Serial);
 }
 
 void loop() {

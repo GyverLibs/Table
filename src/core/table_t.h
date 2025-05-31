@@ -1,9 +1,9 @@
 #pragma once
 #include <Arduino.h>
-#include <StreamIO.h>
 #include <GTL.h>
+#include <StreamIO.h>
 
-enum class cell_t : int {
+enum class cell_t : uint8_t {
     None,
     Int8,
     Uint8,
@@ -19,6 +19,43 @@ enum class cell_t : int {
 #define _TABLE_USE_FOLD (__cplusplus >= 201703L || defined(TABLE_USE_FOLD) || defined(ESP32))
 
 namespace tbl {
+
+const __FlashStringHelper* readType(cell_t type) {
+    static const __FlashStringHelper* types[] = {
+        F("None"),
+        F("Int8"),
+        F("Uint8"),
+        F("Int16"),
+        F("Uint16"),
+        F("Int32"),
+        F("Uint32"),
+        F("Float"),
+        F("Int64"),
+        F("Uint64"),
+    };
+    return types[(uint8_t)type];
+}
+
+size_t typeSize(cell_t type) {
+    switch (type) {
+        case cell_t::Int8:
+        case cell_t::Uint8:
+            return 1;
+        case cell_t::Int16:
+        case cell_t::Uint16:
+            return 2;
+        case cell_t::Int32:
+        case cell_t::Uint32:
+        case cell_t::Float:
+            return 4;
+        case cell_t::Int64:
+        case cell_t::Uint64:
+            return 8;
+        default:
+            break;
+    }
+    return 0;
+}
 
 class table_t {
    public:
@@ -185,26 +222,8 @@ class table_t {
         }
     }
 
-    size_t _cellSize(uint8_t col) {
-        if (col >= cols()) return 0;
-        switch ((cell_t)_types[col]) {
-            case cell_t::Int8:
-            case cell_t::Uint8:
-                return 1;
-            case cell_t::Int16:
-            case cell_t::Uint16:
-                return 2;
-            case cell_t::Int32:
-            case cell_t::Uint32:
-            case cell_t::Float:
-                return 4;
-            case cell_t::Int64:
-            case cell_t::Uint64:
-                return 8;
-            default:
-                break;
-        }
-        return 0;
+    inline size_t _cellSize(uint8_t col) {
+        return typeSize((cell_t)_types[col]);
     }
 
     bool _readFrom(Reader reader) {

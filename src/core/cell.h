@@ -17,15 +17,20 @@ class Cell : public Printable {
     // напечатать в print
     size_t printTo(Print& p) const {
         switch (type()) {
+            case cell_t::Float: return p.print((float)_getF());
             case cell_t::Int8: return p.print((int8_t)_get8());
             case cell_t::Uint8: return p.print((uint8_t)_get8());
             case cell_t::Int16: return p.print((int16_t)_get16());
             case cell_t::Uint16: return p.print((uint16_t)_get16());
             case cell_t::Int32: return p.print((int32_t)_get32());
             case cell_t::Uint32: return p.print((uint32_t)_get32());
+#if defined(ESP32) || defined(ESP8266)
+            case cell_t::Int64: return p.print(_get64());
+            case cell_t::Uint64: return p.print(_get64());
+#else
             case cell_t::Int64: return p.print((int32_t)_get64());
             case cell_t::Uint64: return p.print((uint32_t)_get64());
-            case cell_t::Float: return p.print((float)_getF());
+#endif
             default: break;
         }
         return 0;

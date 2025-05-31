@@ -99,28 +99,17 @@ class Table : public tbl::table_t {
     // вывести таблицу в print
     void dump(Print& p) {
         p.print('\t');
-        for (size_t col = 0; col < cols(); col++) {
+        for (uint16_t col = 0; col < cols(); col++) {
             if (col) p.print('\t');
-            switch ((cell_t)_types[col]) {
-                case cell_t::None: p.print(F("None")); break;
-                case cell_t::Int8: p.print(F("Int8")); break;
-                case cell_t::Uint8: p.print(F("Uint8")); break;
-                case cell_t::Int16: p.print(F("Int16")); break;
-                case cell_t::Uint16: p.print(F("Uint16")); break;
-                case cell_t::Int32: p.print(F("Int32")); break;
-                case cell_t::Uint32: p.print(F("Uint32")); break;
-                case cell_t::Int64: p.print(F("Int64")); break;
-                case cell_t::Uint64: p.print(F("Uint64")); break;
-                case cell_t::Float: p.print(F("Float")); break;
-            }
+            p.print(tbl::readType((cell_t)_types[col]));
         }
         p.println();
 
-        for (size_t row = 0; row < rows(); row++) {
+        for (uint8_t row = 0; row < rows(); row++) {
             p.print(row);
             p.print('.');
             p.print('\t');
-            for (size_t col = 0; col < cols(); col++) {
+            for (uint16_t col = 0; col < cols(); col++) {
                 p.print(get(row, col));
                 p.print('\t');
             }
@@ -132,9 +121,9 @@ class Table : public tbl::table_t {
     String toCSV(char separator = ';', unsigned int dec = 2) {
         String s;
         s.reserve(rows() * cols() * 4);
-        for (size_t row = 0; row < rows(); row++) {
+        for (uint16_t row = 0; row < rows(); row++) {
             if (row) s += "\r\n";
-            for (size_t col = 0; col < cols(); col++) {
+            for (uint8_t col = 0; col < cols(); col++) {
                 if (col) s += separator;
                 tbl::Cell cell = get(row, col);
                 if (cell.type() == cell_t::Float) {
