@@ -20,23 +20,23 @@ enum class cell_t : uint8_t {
 
 namespace tbl {
 
-const __FlashStringHelper* readType(cell_t type) {
-    static const __FlashStringHelper* types[] = {
-        F("None"),
-        F("Int8"),
-        F("Uint8"),
-        F("Int16"),
-        F("Uint16"),
-        F("Int32"),
-        F("Uint32"),
-        F("Float"),
-        F("Int64"),
-        F("Uint64"),
-    };
-    return types[(uint8_t)type];
+static const __FlashStringHelper* readType(cell_t type) {
+    switch (type) {
+        case cell_t::Int8: return F("Int8");
+        case cell_t::Uint8: return F("Uint8");
+        case cell_t::Int16: return F("Int16");
+        case cell_t::Uint16: return F("Uint16");
+        case cell_t::Int32: return F("Int32");
+        case cell_t::Uint32: return F("Uint32");
+        case cell_t::Int64: return F("Int64");
+        case cell_t::Uint64: return F("Uint64");
+        case cell_t::Float: return F("Float");
+        default: break;
+    }
+    return F("None");
 }
 
-size_t typeSize(cell_t type) {
+static size_t typeSize(cell_t type) {
     switch (type) {
         case cell_t::Int8:
         case cell_t::Uint8:
