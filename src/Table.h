@@ -126,11 +126,30 @@ class Table : public tbl::table_t {
             for (uint8_t col = 0; col < cols(); col++) {
                 if (col) s += separator;
                 tbl::Cell cell = get(row, col);
-                if (cell.type() == cell_t::Float) {
-                    if (dec == 2) s += cell.toFloat();
-                    else s += String(cell.toFloat(), dec);
-                } else {
-                    s += cell.toInt();
+
+                // TABLE_TYPES
+                switch (cell.type()) {
+                    case cell_t::Float:
+                        if (dec == 2) s += cell.toFloat();
+                        else s += String(cell.toFloat(), dec);
+                        break;
+
+                    case cell_t::Char:
+                        s += (char)cell.toInt();
+                        break;
+
+                    case cell_t::Char8:
+                    case cell_t::Char16:
+                    case cell_t::Char32:
+                    case cell_t::Char64:
+                    case cell_t::Char128:
+                    case cell_t::Char256:
+                        s += cell.str();
+                        break;
+
+                    default:
+                        s += cell.toInt();
+                        break;
                 }
             }
         }

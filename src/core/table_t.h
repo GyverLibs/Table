@@ -3,7 +3,8 @@
 #include <GTL.h>
 #include <StreamIO.h>
 
-enum class cell_t : uint8_t {
+// TABLE_TYPES
+enum class cell_t : int {
     None,
     Int8,
     Uint8,
@@ -14,13 +15,22 @@ enum class cell_t : uint8_t {
     Float,
     Int64,
     Uint64,
+    Unix,
+    Char,
+    Char8,
+    Char16,
+    Char32,
+    Char64,
+    Char128,
+    Char256,
 };
 
-#define _TABLE_USE_FOLD (__cplusplus >= 201703L || defined(TABLE_USE_FOLD) || defined(ESP32))
+#define _TABLE_USE_FOLD (__cplusplus >= 201703L || defined(TABLE_USE_FOLD) || defined(ESP32) || defined(__AVR__))
 
 namespace tbl {
 
 static const __FlashStringHelper* readType(cell_t type) {
+    // TABLE_TYPES
     switch (type) {
         case cell_t::Int8: return F("Int8");
         case cell_t::Uint8: return F("Uint8");
@@ -31,19 +41,30 @@ static const __FlashStringHelper* readType(cell_t type) {
         case cell_t::Int64: return F("Int64");
         case cell_t::Uint64: return F("Uint64");
         case cell_t::Float: return F("Float");
+        case cell_t::Unix: return F("Unix");
+        case cell_t::Char: return F("Char");
+        case cell_t::Char8: return F("Char8");
+        case cell_t::Char16: return F("Char16");
+        case cell_t::Char32: return F("Char32");
+        case cell_t::Char64: return F("Char64");
+        case cell_t::Char128: return F("Char128");
+        case cell_t::Char256: return F("Char256");
         default: break;
     }
     return F("None");
 }
 
 static size_t typeSize(cell_t type) {
+    // TABLE_TYPES
     switch (type) {
+        case cell_t::Char:
         case cell_t::Int8:
         case cell_t::Uint8:
             return 1;
         case cell_t::Int16:
         case cell_t::Uint16:
             return 2;
+        case cell_t::Unix:
         case cell_t::Int32:
         case cell_t::Uint32:
         case cell_t::Float:
@@ -51,6 +72,12 @@ static size_t typeSize(cell_t type) {
         case cell_t::Int64:
         case cell_t::Uint64:
             return 8;
+        case cell_t::Char8: return 9;
+        case cell_t::Char16: return 17;
+        case cell_t::Char32: return 33;
+        case cell_t::Char64: return 65;
+        case cell_t::Char128: return 129;
+        case cell_t::Char256: return 257;
         default:
             break;
     }
