@@ -39,6 +39,24 @@ class TableFileStatic {
         return inf;
     }
 
+    // установить макс. количество строк (будут смещаться при append)
+    void setMaxRows(uint16_t maxRows) {
+        _maxRows = maxRows;
+    }
+
+    // удалить все строки
+    bool removeAll() {
+        Info inf = getInfo();
+        if (!inf) return false;
+
+        inf.rows = 0;
+        File file = _fs->open(_path, "w");
+        return (file &&
+                _fwrite(file, &inf.cols, 1) &&
+                _fwrite(file, &_maxRows, 2) &&
+                _fwrite(file, inf.types.buf(), inf.cols));
+    }
+
     // вывести таблицу в print
     void dump(Print& p) {
         Info inf = getInfo();

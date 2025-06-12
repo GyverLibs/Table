@@ -229,6 +229,12 @@ TableFileStatic(fs::FS* nfs, const char* path, uint16_t maxRows = 0);
 // получить инфо о таблице
 Info getInfo();
 
+// установить макс. количество строк (будет смещаться при append)
+void setMaxRows(uint16_t maxRows);
+
+// удалить все строки
+bool removeAll();
+
 // вывести таблицу в print
 void dump(Print& p);
 
