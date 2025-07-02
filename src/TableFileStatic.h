@@ -53,7 +53,7 @@ class TableFileStatic {
         File file = _fs->open(_path, "w");
         return (file &&
                 _fwrite(file, &inf.cols, 1) &&
-                _fwrite(file, &_maxRows, 2) &&
+                _fwrite(file, &inf.rows, 2) &&
                 _fwrite(file, inf.types.buf(), inf.cols));
     }
 
