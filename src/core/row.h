@@ -20,7 +20,7 @@ class Row {
     template <typename... Args>
     void write(Args... args) {
         _idx = 0;
-        (_write(args), ...);
+        (void)(_write(args), ...);
     }
 #endif
 

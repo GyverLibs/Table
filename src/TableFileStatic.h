@@ -6,6 +6,8 @@
 
 class TableFileStatic {
    public:
+    TableFileStatic() {}
+
     // указать файловую систему, путь к файлу и макс. кол-во строк (0 - без лимита)
     TableFileStatic(fs::FS* nfs, const char* path, uint16_t maxRows = 0) : _fs(nfs), _path(path), _maxRows(maxRows) {}
 
@@ -192,7 +194,7 @@ class TableFileStatic {
         _inf = &inf;
         _file = &file;
 
-        (_write(args), ...);
+        (void)(_write(args), ...);
         while (_col < inf.cols) _write(0);
         file.close();
 
@@ -238,8 +240,8 @@ class TableFileStatic {
 #endif
 
    private:
-    fs::FS* _fs;
-    const char* _path;
+    fs::FS* _fs = nullptr;
+    const char* _path = "";
     File* _file;
     Info* _inf;
     uint16_t _maxRows;
