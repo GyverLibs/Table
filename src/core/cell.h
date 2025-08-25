@@ -82,6 +82,9 @@ class Cell : public Printable {
         return val;
     }
 
+    void operator=(const String& val) {
+        *this = val.c_str();
+    }
     void operator=(const char* val) {
         // TABLE_TYPES
         switch (type()) {

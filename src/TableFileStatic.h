@@ -299,6 +299,10 @@ class TableFileStatic {
         }
         return false;
     }
+
+    bool _write(const String& arg) {
+        return _write(arg.c_str());
+    }
     bool _write(const char* arg) {
         if (_col >= _inf->cols) return false;
 
