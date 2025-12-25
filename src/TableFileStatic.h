@@ -180,7 +180,6 @@ class TableFileStatic {
         return false;
     }
 
-#if _TABLE_USE_FOLD
     // добавить строку к таблице (сдвинет таблицу, если превышает макс. строк)
     template <typename... Args>
     bool append(Args... args) {
@@ -194,7 +193,7 @@ class TableFileStatic {
         _inf = &inf;
         _file = &file;
 
-        (void)(_write(args), ...);
+        _writeArgs(args...);
         while (_col < inf.cols) _write(0);
         file.close();
 
@@ -237,7 +236,6 @@ class TableFileStatic {
         }
         return true;
     }
-#endif
 
    private:
     fs::FS* _fs = nullptr;
@@ -262,6 +260,12 @@ class TableFileStatic {
         }
         return !amount;
     }
+
+    template <typename T, typename... Rest>
+    void _writeArgs(T first, Rest... rest) {
+        if (_write(first)) _writeArgs(rest...);
+    }
+    void _writeArgs() {}
 
     template <typename T>
     bool _write(T arg) {

@@ -64,7 +64,6 @@ class Table : public tbl::table_t {
         return tbl::Row(row, *this);
     }
 
-#if _TABLE_USE_FOLD
     // добавить строку со значениями в конец
     template <typename... Args>
     bool append(Args... args) {
@@ -81,7 +80,6 @@ class Table : public tbl::table_t {
         scrollUp();
         get(-1).write(args...);
     }
-#endif
 
     // получить ячейку
     inline tbl::Cell get(int row, uint8_t col) {

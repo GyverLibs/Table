@@ -25,8 +25,6 @@ enum class cell_t : int {
     Char256,
 };
 
-#define _TABLE_USE_FOLD (__cplusplus >= 201703L || defined(TABLE_USE_FOLD) || defined(ESP32) || defined(__AVR__))
-
 namespace tbl {
 
 static const __FlashStringHelper* readType(cell_t type) {
