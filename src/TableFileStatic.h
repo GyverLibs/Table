@@ -80,7 +80,7 @@ class TableFileStatic {
             p.print('.');
             p.print('\t');
             for (uint8_t col = 0; col < inf.cols; col++) {
-                uint8_t size = tbl::typeSize(inf.getType(col));
+                size_t size = tbl::typeSize(inf.getType(col));
                 uint8_t raw[size];
                 _fread(file, raw, size);
                 // TABLE_TYPES
@@ -99,7 +99,7 @@ class TableFileStatic {
                     case cell_t::Char32:
                     case cell_t::Char64:
                     case cell_t::Char128:
-                    case cell_t::Char256:
+                    case cell_t::Char254:
                         p.print((const char*)raw);
                         break;
 
@@ -318,7 +318,7 @@ class TableFileStatic {
             case cell_t::Char32:
             case cell_t::Char64:
             case cell_t::Char128:
-            case cell_t::Char256: {
+            case cell_t::Char254: {
                 size_t len = tbl::typeSize(type);
                 char buf[len];
                 strncpy(buf, arg, len - 1);

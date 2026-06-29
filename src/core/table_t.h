@@ -1,7 +1,8 @@
 #pragma once
 #include <Arduino.h>
 #include <GTL.h>
-#include <StreamIO.h>
+
+#include "./io.h"
 
 // TABLE_TYPES
 enum class cell_t : int {
@@ -22,7 +23,7 @@ enum class cell_t : int {
     Char32,
     Char64,
     Char128,
-    Char256,
+    Char254,
 };
 
 namespace tbl {
@@ -46,7 +47,7 @@ static const __FlashStringHelper* readType(cell_t type) {
         case cell_t::Char32: return F("Char32");
         case cell_t::Char64: return F("Char64");
         case cell_t::Char128: return F("Char128");
-        case cell_t::Char256: return F("Char256");
+        case cell_t::Char254: return F("Char254");
         default: break;
     }
     return F("None");
@@ -75,7 +76,7 @@ static size_t typeSize(cell_t type) {
         case cell_t::Char32: return 33;
         case cell_t::Char64: return 65;
         case cell_t::Char128: return 129;
-        case cell_t::Char256: return 257;
+        case cell_t::Char254: return 255;
         default:
             break;
     }
@@ -146,7 +147,7 @@ class table_t {
     bool remove(int row) {
         if (!rows()) return false;
         if (row < 0) row += rows();
-        if (row < 0) return false;
+        if (row < 0 || (uint16_t)row >= rows()) return false;
 
         uint8_t* p = _data.buf() + row * _rowSize;
         memmove(p, p + _rowSize, (rows() - row - 1) * _rowSize);
@@ -202,7 +203,7 @@ class table_t {
 
     // экспортировать таблицу в буфер размера writeSize()
     bool writeTo(uint8_t* buffer) {
-        Writer wr(buffer);
+        BufferWriter wr(buffer);
         return writeTo(wr);
     }
 

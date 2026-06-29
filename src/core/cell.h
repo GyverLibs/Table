@@ -18,28 +18,28 @@ class Cell : public Printable {
     size_t printTo(Print& p) const {
         // TABLE_TYPES
         switch (type()) {
-            case cell_t::Float: return p.print((float)_getF());
-            case cell_t::Int8: return p.print((int8_t)_get8());
-            case cell_t::Uint8: return p.print((uint8_t)_get8());
-            case cell_t::Int16: return p.print((int16_t)_get16());
-            case cell_t::Uint16: return p.print((uint16_t)_get16());
-            case cell_t::Int32: return p.print((int32_t)_get32());
-            case cell_t::Uint32: return p.print((uint32_t)_get32());
-            case cell_t::Unix: return p.print((uint32_t)_get32());
+            case cell_t::Float: return p.print(_get<float>());
+            case cell_t::Int8: return p.print(_get<int8_t>());
+            case cell_t::Uint8: return p.print(_get<uint8_t>());
+            case cell_t::Int16: return p.print(_get<int16_t>());
+            case cell_t::Uint16: return p.print(_get<uint16_t>());
+            case cell_t::Int32: return p.print(_get<int32_t>());
+            case cell_t::Uint32: return p.print(_get<uint32_t>());
+            case cell_t::Unix: return p.print(_get<uint32_t>());
 #if defined(ESP32) || defined(ESP8266)
-            case cell_t::Int64: return p.print(_get64());
-            case cell_t::Uint64: return p.print(_get64());
+            case cell_t::Int64: return p.print(_get<int64_t>());
+            case cell_t::Uint64: return p.print(_get<uint64_t>());
 #else
-            case cell_t::Int64: return p.print((int32_t)_get64());
-            case cell_t::Uint64: return p.print((uint32_t)_get64());
+            case cell_t::Int64: return p.print((int32_t)_get<int64_t>());
+            case cell_t::Uint64: return p.print((uint32_t)_get<uint64_t>());
 #endif
-            case cell_t::Char: return p.print((char)_get8());
+            case cell_t::Char: return p.print(_get<char>());
             case cell_t::Char8:
             case cell_t::Char16:
             case cell_t::Char32:
             case cell_t::Char64:
             case cell_t::Char128:
-            case cell_t::Char256:
+            case cell_t::Char254:
                 return p.print(str());
             default: break;
         }
@@ -85,6 +85,9 @@ class Cell : public Printable {
     void operator=(const String& val) {
         *this = val.c_str();
     }
+    void operator=(char* val) {
+        *this = (const char*)val;
+    }
     void operator=(const char* val) {
         // TABLE_TYPES
         switch (type()) {
@@ -93,7 +96,7 @@ class Cell : public Printable {
             case cell_t::Char32:
             case cell_t::Char64:
             case cell_t::Char128:
-            case cell_t::Char256: {
+            case cell_t::Char254: {
                 size_t len = typeSize(type());
                 strncpy(str(), val, len - 1);
                 str()[len - 1] = 0;
@@ -107,26 +110,34 @@ class Cell : public Printable {
     int32_t toInt() const {
         // TABLE_TYPES
         switch (type()) {
-            case cell_t::Char:
             case cell_t::Int8:
+                return _get<int8_t>();
+
+            case cell_t::Char:
             case cell_t::Uint8:
-                return _get8();
+                return _get<uint8_t>();
 
             case cell_t::Int16:
+                return _get<int16_t>();
+
             case cell_t::Uint16:
-                return _get16();
+                return _get<uint16_t>();
 
             case cell_t::Int32:
+                return _get<int32_t>();
+
             case cell_t::Uint32:
             case cell_t::Unix:
-                return _get32();
+                return _get<uint32_t>();
 
             case cell_t::Int64:
+                return _get<int64_t>();
+
             case cell_t::Uint64:
-                return _get64();
+                return _get<uint64_t>();
 
             case cell_t::Float:
-                return _getF();
+                return _get<float>();
 
             default:
                 break;
@@ -135,14 +146,16 @@ class Cell : public Printable {
     }
 
     float toFloat() const {
-        return (type() == cell_t::Float) ? _getF() : toInt();
+        return (type() == cell_t::Float) ? _get<float>() : toInt();
     }
 
     int64_t toInt64() const {
         switch (type()) {
             case cell_t::Int64:
+                return _get<int64_t>();
+
             case cell_t::Uint64:
-                return _get64();
+                return _get<uint64_t>();
 
             default:
                 break;
@@ -179,7 +192,7 @@ class Cell : public Printable {
             case cell_t::Char32:
             case cell_t::Char64:
             case cell_t::Char128:
-            case cell_t::Char256:
+            case cell_t::Char254:
                 return !strcmp(str(), val);
             default: break;
         }
@@ -278,30 +291,10 @@ class Cell : public Printable {
     uint8_t col;
     table_t& t;
 
-    // TABLE_TYPES
-    uint8_t _get8() const {
-        uint8_t val;
-        memcpy(&val, buf(), 1);
-        return val;
-    }
-    uint16_t _get16() const {
-        uint16_t val;
-        memcpy(&val, buf(), 2);
-        return val;
-    }
-    uint32_t _get32() const {
-        uint32_t val;
-        memcpy(&val, buf(), 4);
-        return val;
-    }
-    uint64_t _get64() const {
-        uint64_t val;
-        memcpy(&val, buf(), 8);
-        return val;
-    }
-    float _getF() const {
-        float val;
-        memcpy(&val, buf(), 4);
+    template <typename T>
+    T _get() const {
+        T val;
+        memcpy(&val, buf(), sizeof(T));
         return val;
     }
     void _write(void* p, uint8_t size) {

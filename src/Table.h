@@ -103,7 +103,7 @@ class Table : public tbl::table_t {
         }
         p.println();
 
-        for (uint8_t row = 0; row < rows(); row++) {
+        for (uint16_t row = 0; row < rows(); row++) {
             p.print(row);
             p.print('.');
             p.print('\t');
@@ -141,7 +141,7 @@ class Table : public tbl::table_t {
                     case cell_t::Char32:
                     case cell_t::Char64:
                     case cell_t::Char128:
-                    case cell_t::Char256:
+                    case cell_t::Char254:
                         s += cell.str();
                         break;
 

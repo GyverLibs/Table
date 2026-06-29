@@ -21,7 +21,6 @@ Compatible with all Arduino platforms (Arduino features are used)
 
 ### Dependencies
 - GTL
-- StreamIO
 
 ## Contents
 - [Documentation.](#docs)

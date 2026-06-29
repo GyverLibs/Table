@@ -29,16 +29,16 @@ class TableFile : public Table {
 
     // прочитать данные
     bool begin() {
+        if (!_fs || !_path) return false;
+
         bool res = false;
-        if (_fs) {
-            if (_fs->exists(_path)) {
-                File file = _fs->open(_path, "r");
-                if (file) res = readFrom(file, file.size());
-                _update = false;
-            } else {
-                File file = _fs->open(_path, "w");
-                res = true;
-            }
+        if (_fs->exists(_path)) {
+            File file = _fs->open(_path, "r");
+            if (file) res = readFrom(file, file.size());
+            if (res) _update = false;
+        } else {
+            File file = _fs->open(_path, "w");
+            res = file;
         }
         return res;
     }
@@ -46,10 +46,11 @@ class TableFile : public Table {
     // обновить данные в файле
     bool update() {
         _tmr = 0;
-        if (!_update) return false;
-        _update = false;
+        if (!_update || !_fs || !_path) return false;
         File file = _fs->open(_path, "w");
-        return file ? writeTo(file) : 0;
+        if (!file || !writeTo(file)) return false;
+        _update = false;
+        return true;
     }
 
     // тикер, вызывать в loop. Сам обновит данные при изменении и выходе таймаута, вернёт true
@@ -58,8 +59,7 @@ class TableFile : public Table {
             _tmr = millis();
         }
         if (_tmr && millis() - _tmr >= _tout) {
-            update();
-            return 1;
+            return update();
         }
         return 0;
     }
